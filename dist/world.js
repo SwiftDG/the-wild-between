@@ -15,8 +15,46 @@ scene.add(new THREE.HemisphereLight('#b8c7bd','#263026',2.4));
 const sun=new THREE.DirectionalLight('#ffd09b',4.2);sun.position.set(-7,11,2);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(180,180,80,80),new THREE.MeshStandardMaterial({color:'#273329',roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.7;ground.receiveShadow=true;
 const p=ground.geometry.attributes.position;for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i);p.setZ(i,Math.sin(x*.16)*.35+Math.cos(y*.12)*.25+Math.sin((x+y)*.07)*.5)}p.needsUpdate=true;ground.geometry.computeVertexNormals();scene.add(ground);
-const trees=new THREE.Group();const trunkGeo=new THREE.CylinderGeometry(.05,.12,3.7,5);const crownGeo=new THREE.ConeGeometry(.75,3.4,7);const trunkMat=new THREE.MeshStandardMaterial({color:'#2d241a'});const crownMat=new THREE.MeshStandardMaterial({color:'#18231b',roughness:1});for(let i=0;i<72;i++){const a=(i/72)*Math.PI*2+(i%5)*.3,r=8+(i%11)*1.05;const t=new THREE.Group();const trunk=new THREE.Mesh(trunkGeo,trunkMat),crown=new THREE.Mesh(crownGeo,crownMat);trunk.position.y=1.1;crown.position.y=3.7;t.add(trunk,crown);t.position.set(Math.cos(a)*r,-.6,Math.sin(a)*r-3);t.scale.setScalar(.7+(i%7)*.1);trees.add(t)}scene.add(trees);
-const grassGeo=new THREE.ConeGeometry(.025,.65,3),grassMat=new THREE.MeshStandardMaterial({color:'#59694f'}),grass=new THREE.InstancedMesh(grassGeo,grassMat,850),dummy=new THREE.Object3D();for(let i=0;i<850;i++){const a=Math.random()*Math.PI*2,r=2+Math.random()*24;dummy.position.set(Math.cos(a)*r,-.37,Math.sin(a)*r-2);dummy.rotation.y=Math.random()*6;dummy.scale.setScalar(.5+Math.random());dummy.updateMatrix();grass.setMatrixAt(i,dummy.matrix)}scene.add(grass);
+// Varied branching conifers replace single geometric cones.
+const trees=new THREE.Group();
+const bark=new THREE.MeshStandardMaterial({color:'#322d25',roughness:1});
+const foliagePalette=['#26382b','#304532','#1b3027','#425443'].map(color=>new THREE.MeshStandardMaterial({color,roughness:1,side:THREE.DoubleSide}));
+const branchGeo=new THREE.CylinderGeometry(.012,.055,1,5);
+const leafGeo=new THREE.IcosahedronGeometry(1,1);
+function seeded(n){let x=Math.sin(n*127.1+78.233)*43758.5453;return x-Math.floor(x)}
+function createTree(seed,height){
+ const t=new THREE.Group(), trunk=new THREE.Mesh(new THREE.CylinderGeometry(.04,.12,height,7),bark);
+ trunk.position.y=height*.5;trunk.castShadow=true;t.add(trunk);
+ const levels=5+Math.floor(seeded(seed+2)*3), branches=7+Math.floor(seeded(seed+3)*3);
+ for(let j=0;j<levels;j++){
+  const y=.5+j*(height-.95)/levels, spread=(1-j/levels)*1.28+.12;
+  for(let k=0;k<branches;k++){
+   const angle=k*Math.PI*2/branches+j*.55+seeded(seed+j*11+k)*.35;
+   const length=spread*(.72+seeded(seed*5+j*10+k)*.55);
+   const branch=new THREE.Mesh(branchGeo,bark);
+   branch.position.set(Math.cos(angle)*length*.45,y+length*.1,Math.sin(angle)*length*.45);
+   branch.rotation.z=-Math.cos(angle)*1.12;branch.rotation.x=Math.sin(angle)*1.12;
+   branch.scale.set(.85,length, .85);t.add(branch);
+   const foliage=new THREE.Mesh(leafGeo,foliagePalette[(seed+j+k)%foliagePalette.length]);
+   foliage.position.set(Math.cos(angle)*length*.78,y+length*.15,Math.sin(angle)*length*.78);
+   foliage.scale.set(.48+length*.29,.31+length*.30,.38+length*.25);
+   foliage.rotation.set(seeded(seed+j)*.4,angle,seeded(k+seed)*.5);t.add(foliage);
+  }
+ }
+ return t;
+}
+for(let i=0;i<62;i++){
+ const a=i*2.39996,r=9+seeded(i+12)*18;
+ const tree=createTree(i,3+seeded(i*7+4)*3.5);
+ tree.position.set(Math.cos(a)*r,-.7,Math.sin(a)*r-4);
+ tree.scale.setScalar(.85+seeded(i*3+1)*.5);trees.add(tree);
+}
+scene.add(trees);
+// Ground-cover tufts, fern-like leaves and stones give the clearing a natural scale.
+const grassGeo=new THREE.ConeGeometry(.026,.42,4),grassMat=new THREE.MeshStandardMaterial({color:'#52694b',roughness:1}),grass=new THREE.InstancedMesh(grassGeo,grassMat,2400),dummy=new THREE.Object3D();
+for(let i=0;i<2400;i++){const a=seeded(i*4+6)*Math.PI*2,r=2+Math.sqrt(seeded(i*3+8))*27;dummy.position.set(Math.cos(a)*r,-.40,Math.sin(a)*r-2);dummy.rotation.set((seeded(i+19)-.5)*.3,seeded(i*5)*6.28,(seeded(i+12)-.5)*.35);dummy.scale.setScalar(.35+seeded(i+8)*1.6);dummy.updateMatrix();grass.setMatrixAt(i,dummy.matrix)}scene.add(grass);
+const stones=new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1,0),new THREE.MeshStandardMaterial({color:'#535a4c',roughness:1}),120);
+for(let i=0;i<120;i++){const a=seeded(i*7+8)*6.28,r=2+seeded(i*11+9)*22;dummy.position.set(Math.cos(a)*r,-.51,Math.sin(a)*r-2);dummy.rotation.set(seeded(i)*.2,seeded(i+1)*6.28,0);dummy.scale.set(.08+seeded(i+3)*.2,.04+seeded(i+6)*.08,.08+seeded(i+4)*.2);dummy.updateMatrix();stones.setMatrixAt(i,dummy.matrix)}scene.add(stones);
 let fox,mixer,actions=[],active=0,modelReady=false,foxProcedural=false,foxParts=null;
 // A local procedural fox is always available. The optional detailed rig upgrades it when loaded.
 function makeFox(){
@@ -40,13 +78,15 @@ function makeFox(){
 }
 function showFallbackFox(){if(modelReady)return;fox=makeFox();foxProcedural=true;scene.add(fox);modelReady=true;loader.classList.add('done');}
 // Do not allow the landscape to become an empty experience if an external model fails.
-const foxTimeout=setTimeout(showFallbackFox,3800);
-new GLTFLoader().load('https://threejs.org/examples/models/gltf/Fox.glb',g=>{
+const foxTimeout=setTimeout(showFallbackFox,12000);
+new GLTFLoader().load('./assets/fox.glb',g=>{
  const detailed=g.scene;detailed.scale.setScalar(.035);detailed.position.set(.7,-.66,-2.4);detailed.rotation.y=-1.7;
  detailed.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
  if(foxProcedural){scene.remove(fox);fox=null;foxProcedural=false}
  clearTimeout(foxTimeout);fox=detailed;scene.add(fox);mixer=new THREE.AnimationMixer(fox);actions=g.animations.map(c=>mixer.clipAction(c));actions[0]?.play();modelReady=true;loader.classList.add('done');
-},undefined,()=>{clearTimeout(foxTimeout);showFallbackFox()});
+},undefined,()=>{new GLTFLoader().load('https://threejs.org/examples/models/gltf/Fox.glb',g=>{
+ const detailed=g.scene;detailed.scale.setScalar(.035);detailed.position.set(.7,-.66,-2.4);detailed.rotation.y=-1.7;detailed.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});if(foxProcedural){scene.remove(fox);foxProcedural=false}clearTimeout(foxTimeout);fox=detailed;scene.add(fox);mixer=new THREE.AnimationMixer(fox);actions=g.animations.map(c=>mixer.clipAction(c));actions[0]?.play();modelReady=true;loader.classList.add('done');
+ },undefined,()=>{clearTimeout(foxTimeout);showFallbackFox()});});
 function playClip(index,speed=1){if(foxProcedural){active=index;return}if(!actions.length||active===index)return;actions[active]?.fadeOut(.35);actions[index]?.reset().setEffectiveTimeScale(speed).fadeIn(.35).play();active=index}
 let targetX=.58,targetY=.62,lureActive=false;addEventListener('pointermove',e=>{targetX=e.clientX/innerWidth;targetY=e.clientY/innerHeight;if(scrollProgress()>.45&&scrollProgress()<.78){lureActive=true;lure.style.opacity='1';lure.style.left=e.clientX+'px';lure.style.top=e.clientY+'px'}});document.querySelector('#touch-light').onclick=()=>{lureActive=true;targetX=.35+Math.random()*.3;targetY=.45+Math.random()*.25;lure.style.opacity='1';lure.style.left=(targetX*innerWidth)+'px';lure.style.top=(targetY*innerHeight)+'px'};
 const scrollProgress=()=>scrollY/(document.documentElement.scrollHeight-innerHeight||1);
@@ -54,8 +94,16 @@ const dawn=new THREE.Color('#788b82'),ember=new THREE.Color('#9a563c'),night=new
 function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-last)/1000,.05);last=now;const s=reduced?.35:scrollProgress();let x,y,z,lookY;
 if(s<.28){const q=s/.28;x=THREE.MathUtils.lerp(0,-2.2,q);y=THREE.MathUtils.lerp(3.2,2.3,q);z=THREE.MathUtils.lerp(13,8,q);lookY=.9;scene.background.copy(dawn).lerp(ember,q*.25);}
 else if(s<.58){const q=(s-.28)/.3;x=THREE.MathUtils.lerp(-2.2,2.8,q);y=THREE.MathUtils.lerp(2.3,1.65,q);z=THREE.MathUtils.lerp(8,6.2,q);lookY=.6;scene.background.copy(dawn).lerp(ember,.25+q*.55);if(fox){fox.position.x=THREE.MathUtils.lerp(.7,-1.2,q);fox.position.z=THREE.MathUtils.lerp(-2.4,-2.2,q);fox.rotation.y=-1.55;playClip(q>.1&&q<.92?1:0,q>.65?1.25:.8)}}
-else{const q=Math.min(1,(s-.58)/.42);x=THREE.MathUtils.lerp(2.8,-1,q);y=THREE.MathUtils.lerp(1.65,3.2,q);z=THREE.MathUtils.lerp(6.2,10.5,q);lookY=.5;scene.background.copy(ember).lerp(night,q);if(fox){const tx=(targetX-.5)*8,tz=-1+(targetY-.5)*5;const desired=lureActive&&q<.55?tx:-3.3;fox.position.x=THREE.MathUtils.lerp(fox.position.x,desired,.025);fox.position.z=THREE.MathUtils.lerp(fox.position.z,lureActive?tz:-2,.02);fox.rotation.y=THREE.MathUtils.lerp(fox.rotation.y,desired>fox.position.x?1.55:-1.55,.04);playClip(Math.abs(desired-fox.position.x)>.45?1:0,.85)}}
-camera.position.lerp(new THREE.Vector3(x,y,z),.055);camera.lookAt(0,lookY,-2);sun.intensity=THREE.MathUtils.lerp(4.2,.7,Math.max(0,(s-.45)/.55));scene.fog.color.copy(scene.background);mixer?.update(dt);if(foxProcedural&&fox?.userData.animate)fox.userData.animate(now/1000,active===1);renderer.render(scene,camera)}requestAnimationFrame(frame);
+else{const q=Math.min(1,(s-.58)/.42);x=THREE.MathUtils.lerp(2.8,-1,q);y=THREE.MathUtils.lerp(1.65,3.2,q);z=THREE.MathUtils.lerp(6.2,10.5,q);lookY=.5;scene.background.copy(ember).lerp(night,q);if(fox){const ray=new THREE.Raycaster();ray.setFromCamera(new THREE.Vector2(targetX*2-1,1-targetY*2),camera);const hit=new THREE.Vector3();const point=ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0,1,0),.5),hit);const tx=point?THREE.MathUtils.clamp(point.x,-5,5):0,tz=point?THREE.MathUtils.clamp(point.z,-7,2):-2;const desired=lureActive&&q<.55?tx:-3.3;fox.position.x=THREE.MathUtils.lerp(fox.position.x,desired,.025);fox.position.z=THREE.MathUtils.lerp(fox.position.z,lureActive?tz:-2,.02);fox.rotation.y=THREE.MathUtils.lerp(fox.rotation.y,desired>fox.position.x?1.55:-1.55,.04);playClip(Math.abs(desired-fox.position.x)>.45?1:0,.85)}}
+camera.position.lerp(new THREE.Vector3(x,y,z),.055);camera.lookAt(0,lookY,-2);sun.intensity=THREE.MathUtils.lerp(4.2,.7,Math.max(0,(s-.45)/.55));scene.fog.color.copy(scene.background);audioFrame(now,s);mixer?.update(dt);if(foxProcedural&&fox?.userData.animate)fox.userData.animate(now/1000,active===1);renderer.render(scene,camera)}requestAnimationFrame(frame);
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.fov=innerWidth<700?52:38;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth<700?1.2:1.8));renderer.setSize(innerWidth,innerHeight)});
-let audioCtx,osc,gain;document.querySelector('#sound').onclick=async e=>{const b=e.currentTarget,on=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',String(on));b.querySelector('.sound-label').textContent=on?'Sound on':'Sound off';if(!audioCtx){audioCtx=new AudioContext();osc=audioCtx.createOscillator();gain=audioCtx.createGain();osc.type='sine';osc.frequency.value=73;gain.gain.value=0;osc.connect(gain).connect(audioCtx.destination);osc.start()}await audioCtx.resume();gain.gain.setTargetAtTime(on?.025:0,audioCtx.currentTime,.6)};
+// Real wind-like filtered noise and intermittent bird calls, generated locally without remote audio files.
+let audioCtx, master, wind, birdTimer=0, soundEnabled=false;
+function chirp(t){if(!audioCtx||!soundEnabled)return;const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sine';o.frequency.setValueAtTime(1550,t);o.frequency.exponentialRampToValueAtTime(2550,t+.09);o.frequency.exponentialRampToValueAtTime(1850,t+.22);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.055,t+.035);g.gain.exponentialRampToValueAtTime(.0001,t+.26);o.connect(g).connect(master);o.start(t);o.stop(t+.28)}
+function setupAudio(){audioCtx=new AudioContext();master=audioCtx.createGain();master.gain.value=0;master.connect(audioCtx.destination);
+ const length=audioCtx.sampleRate*3,buffer=audioCtx.createBuffer(1,length,audioCtx.sampleRate),data=buffer.getChannelData(0);for(let i=0;i<length;i++)data[i]=(Math.random()*2-1)*.35;
+ const source=audioCtx.createBufferSource();source.buffer=buffer;source.loop=true;const low=audioCtx.createBiquadFilter(),high=audioCtx.createBiquadFilter();low.type='lowpass';low.frequency.value=420;high.type='highpass';high.frequency.value=90;source.connect(low).connect(high).connect(master);source.start();wind=low;
+}
+document.querySelector('#sound').onclick=async e=>{const b=e.currentTarget; soundEnabled=!soundEnabled;b.setAttribute('aria-pressed',String(soundEnabled));b.querySelector('.sound-label').textContent=soundEnabled?'Sound on':'Sound off';if(!audioCtx)setupAudio();await audioCtx.resume();master.gain.setTargetAtTime(soundEnabled?.21:0,audioCtx.currentTime,.3);if(soundEnabled)chirp(audioCtx.currentTime+.15)};
+function audioFrame(now,s){if(!audioCtx||!soundEnabled)return;wind.frequency.setTargetAtTime(320+Math.sin(now*.00022)*110+(s>.7?45:0),audioCtx.currentTime,.6);if(now>birdTimer){chirp(audioCtx.currentTime+.02);birdTimer=now+3800+Math.random()*5300}}
 }
