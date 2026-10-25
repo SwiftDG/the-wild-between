@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#111610"><meta name="description" content="A cinematic journey through the hours when the landscape changes character.">
+  <title>The Wild Between</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+</head>
+<body>
+  <a class="skip" href="#story">Skip cinematic scene</a>
+  <div class="fallback" aria-hidden="true"><div class="fallback-sun"></div><div class="fallback-ridge far"></div><div class="fallback-ridge near"></div></div>
+  <canvas id="world" aria-label="Animated twilight landscape with a fox"></canvas>
+  <div class="grain" aria-hidden="true"></div>
+  <header>
+    <a class="mark" href="#opening" aria-label="The Wild Between home"><span>THE WILD</span><span>BETWEEN</span></a>
+    <button id="sound" aria-pressed="false"><span class="sound-dot"></span><span class="sound-label">Sound off</span></button>
+  </header>
+  <main id="story">
+    <section id="opening" class="chapter opening" data-tone="dawn">
+      <p class="eyebrow">A study of movement at the edge of daylight</p>
+      <h1>Before the<br><i>world wakes.</i></h1>
+      <p class="deck">Mist holds the valley. A small life listens from the tree line.</p>
+    </section>
+    <section class="chapter encounter" data-tone="forest">
+      <div class="copy left-copy">
+        <p class="eyebrow">06:17</p>
+        <h2>The first<br>movement.</h2>
+        <p>Not an entrance. A decision. The fox tests the clearing before crossing it.</p>
+      </div>
+    </section>
+    <section class="chapter pursuit" data-tone="ember">
+      <div class="copy right-copy">
+        <p class="eyebrow">19:42</p>
+        <h2>Light becomes<br><i>instinct.</i></h2>
+        <p>The warm point is yours to place. The animal chooses how close to come.</p>
+        <button id="touch-light">Place the light</button>
+      </div>
+      <div id="lure" aria-hidden="true"></div>
+    </section>
+    <section class="chapter night" data-tone="night">
+      <div class="final-copy">
+        <p class="eyebrow">The blue hour</p>
+        <h2>Everything alive<br><i>leaves a trace.</i></h2>
+        <p>One clearing. One fox. A complete day told through attention.</p>
+      </div>
+    </section>
+  </main>
+  <footer>
+    <span>THE WILD BETWEEN</span><span>Original interactive study, 2026</span>
+    <span>Fox model: PixelMannen, rig by tomkranis, glTF conversion by AsoboStudio and scurest. CC BY 4.0.</span>
+  </footer>
+  <div id="loader" role="status"><div class="loader-mark">WB</div><div class="loader-line"><i></i></div><span>Preparing the landscape</span></div>
+  <script type="module" src="./world.js"></script>
+</body>
+</html>
