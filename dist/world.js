@@ -80,7 +80,17 @@ function showFallbackFox(){if(modelReady)return;fox=makeFox();foxProcedural=true
 // Do not allow the landscape to become an empty experience if an external model fails.
 const foxTimeout=setTimeout(showFallbackFox,12000);
 new GLTFLoader().load('./assets/fox.glb',g=>{
- const detailed=g.scene;detailed.scale.setScalar(.035);detailed.position.set(.7,-.66,-2.4);detailed.rotation.y=-1.7;
+ /* WILD_FOX_CUSTOM_MODEL */
+ const detailed=g.scene;
+ const rawBox=new THREE.Box3().setFromObject(detailed);
+ const rawSize=rawBox.getSize(new THREE.Vector3());
+ const biggest=Math.max(rawSize.x,rawSize.y,rawSize.z,.0001);
+ detailed.scale.setScalar(2.4/biggest);
+ const fittedBox=new THREE.Box3().setFromObject(detailed);
+ const center=fittedBox.getCenter(new THREE.Vector3());
+ detailed.position.set(.7-center.x,-.66-fittedBox.min.y,-2.4-center.z);
+ detailed.rotation.y=-1.7;
+ 
  detailed.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
  if(foxProcedural){scene.remove(fox);fox=null;foxProcedural=false}
  clearTimeout(foxTimeout);fox=detailed;scene.add(fox);mixer=new THREE.AnimationMixer(fox);actions=g.animations.map(c=>mixer.clipAction(c));actions[0]?.play();modelReady=true;loader.classList.add('done');
